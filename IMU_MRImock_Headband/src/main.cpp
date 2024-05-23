@@ -45,12 +45,12 @@ void setup(){
   myISM.setGyroFullScale(ISM_250dps); 
 
   // Turn on the accelerometer's filter and apply settings. 
-  //myISM.setAccelFilterLP2();
-  //myISM.setAccelSlopeFilter(ISM_LP_ODR_DIV_100);
+  myISM.setAccelFilterLP2();
+  myISM.setAccelSlopeFilter(ISM_LP_ODR_DIV_100);
 
   // Turn on the gyroscope's filter and apply settings. 
-  //myISM.setGyroFilterLP1();
-  //myISM.setGyroLP1Bandwidth(ISM_MEDIUM);
+  myISM.setGyroFilterLP1();
+  myISM.setGyroLP1Bandwidth(ISM_MEDIUM);
 
   previousTime = millis();
 }
@@ -73,17 +73,17 @@ void loop(){
     // Print in a format for the plotter
     Serial.print("AX:");
     Serial.print(ax);
-    Serial.print(",AY:");
+    Serial.print(" AY:");
     Serial.print(ay);
-    Serial.print(",AZ:");
-    Serial.println(az);
-
-    Serial.print("GX:");
+    Serial.print(" AZ:");
+    Serial.print(az);
+    Serial.print(" GX:");
     Serial.print(gx);
-    Serial.print(",GY:");
+    Serial.print(" GY:");
     Serial.print(gy);
-    Serial.print(",GZ:");
+    Serial.print(" GZ:");
     Serial.println(gz);
-    delay(1);
+    delay(100);
   }
 }
+
