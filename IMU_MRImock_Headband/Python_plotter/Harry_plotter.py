@@ -1,25 +1,34 @@
 import serial
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import time
+from collections import deque
+import threading
+import serial.tools.list_ports
 
-# Set up the serial line
-ser = serial.Serial('COM3', 115200)  # Change 'COM3' to your specific serial port
+ports = list(serial.tools.list_ports.comports())
+for p in ports:
+    if "3315221F37323835B61A33324B572D45" in p.serial_number:
+        print ("IMU found!")
+    ser = serial.Serial(p.device, 115200) 
 
 # Parameters for plotting
 max_len = 300  # Number of points to display on the graph
 
-# Initialize empty lists for data
-ax_data = []
-ay_data = []
-az_data = []
-gx_data = []
-gy_data = []
-gz_data = []
+# Initialize deques for data
+timestamps = deque(maxlen=max_len)
+ax_data = deque(maxlen=max_len)
+ay_data = deque(maxlen=max_len)
+az_data = deque(maxlen=max_len)
+gx_data = deque(maxlen=max_len)
+gy_data = deque(maxlen=max_len)
+gz_data = deque(maxlen=max_len)
 
 # Create figure for plotting
 fig, (ax, gx) = plt.subplots(2, 1)
 ax.set_title('Accelerometer Data')
 gx.set_title('Gyroscope Data')
+tstart = time.time()
 
 # Initialize plots
 ax_ax_line, = ax.plot([], [], label='AX')
@@ -29,21 +38,37 @@ gx_gx_line, = gx.plot([], [], label='GX')
 gx_gy_line, = gx.plot([], [], label='GY')
 gx_gz_line, = gx.plot([], [], label='GZ')
 
-ax.set_xlabel('Time')
-ax.set_ylabel('Acceleration (mg)')
+ax.set_xlabel('Time (s)')
+ax.set_ylabel('mg')
 ax.grid(True)
-gx.set_xlabel('Time')
+gx.set_xlabel('Time (s)')
 gx.set_ylabel('mdps')
 gx.grid(True)
 
 ax.legend()
 gx.legend()
 
+# Thread-safe queue for serial data
+data_queue = deque(maxlen=1)
+
+def read_serial_data():
+    while True:
+        line = ser.readline().decode('utf-8').strip()
+        if line.startswith("AX:"):
+            data_queue.append(line)
+
+# Start the serial reading thread
+serial_thread = threading.Thread(target=read_serial_data)
+serial_thread.daemon = True
+serial_thread.start()
+
 # Function to update the plot
 def update_plot(frame):
-    line = ser.readline().decode('utf-8').strip()
-    if line.startswith("AX:"):
+    if data_queue:
+        line = data_queue.popleft()
         parts = line.split(" ")
+        current_time = time.time() - tstart
+        timestamps.append(current_time)
         ax_data.append(float(parts[0].split(":")[1]))
         ay_data.append(float(parts[1].split(":")[1]))
         az_data.append(float(parts[2].split(":")[1]))
@@ -51,20 +76,12 @@ def update_plot(frame):
         gy_data.append(float(parts[4].split(":")[1]))
         gz_data.append(float(parts[5].split(":")[1]))
 
-        if len(ax_data) > max_len:
-            ax_data.pop(0)
-            ay_data.pop(0)
-            az_data.pop(0)
-            gx_data.pop(0)
-            gy_data.pop(0)
-            gz_data.pop(0)
-
-        ax_ax_line.set_data(range(len(ax_data)), ax_data)
-        ax_ay_line.set_data(range(len(ay_data)), ay_data)
-        ax_az_line.set_data(range(len(az_data)), az_data)
-        gx_gx_line.set_data(range(len(gx_data)), gx_data)
-        gx_gy_line.set_data(range(len(gy_data)), gy_data)
-        gx_gz_line.set_data(range(len(gz_data)), gz_data)
+        ax_ax_line.set_data(timestamps, ax_data)
+        ax_ay_line.set_data(timestamps, ay_data)
+        ax_az_line.set_data(timestamps, az_data)
+        gx_gx_line.set_data(timestamps, gx_data)
+        gx_gy_line.set_data(timestamps, gy_data)
+        gx_gz_line.set_data(timestamps, gz_data)
 
         ax.relim()
         ax.autoscale_view()
@@ -74,6 +91,6 @@ def update_plot(frame):
     return ax_ax_line, ax_ay_line, ax_az_line, gx_gx_line, gx_gy_line, gx_gz_line
 
 # Set up plot to call update function periodically
-ani = animation.FuncAnimation(fig, update_plot, interval=50, cache_frame_data=False)
+ani = animation.FuncAnimation(fig, update_plot, interval=5, blit=True,cache_frame_data=False)
 
 plt.show()
