@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 
 # Set up the serial line
-ser = serial.Serial('COM5', 115200)  # Change 'COM3' to your specific serial port
+ser = serial.Serial('COM3', 115200)  # Change 'COM3' to your specific serial port
 
 # Parameters for plotting
 max_len = 300  # Number of points to display on the graph
