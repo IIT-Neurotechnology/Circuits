@@ -40,8 +40,8 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='MyApplication'
+    name='IMU_Visualizer_and_save'
 )
 
 # Specify the output directory
-distpath = r'D:'
+distpath = r'D:\ '
