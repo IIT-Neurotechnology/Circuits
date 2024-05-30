@@ -1,5 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+
 block_cipher = None
 
 
@@ -40,8 +41,8 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='IMU_Visualizer_and_save'
+    name='MyApplication'
 )
 
 # Specify the output directory
-distpath = r'D:\ '
+distpath = r'D:'
